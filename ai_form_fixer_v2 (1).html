@@ -1,0 +1,3037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI Form Fixer — Real-time Workout Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+/* ============================================================
+   DESIGN TOKENS & RESET
+   ============================================================ */
+:root {
+  --bg: #080a0d;
+  --surface: #0e1117;
+  --surface2: #141820;
+  --surface3: #1a1f2b;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.1);
+  --border3: rgba(255,255,255,0.16);
+  --text: #eef0f4;
+  --text2: #a8b0be;
+  --muted: #5a6272;
+  --accent: #00d4aa;
+  --accent-dim: rgba(0,212,170,0.12);
+  --accent-glow: rgba(0,212,170,0.35);
+  --accent2: #3b9eff;
+  --accent2-dim: rgba(59,158,255,0.12);
+  --warn: #ff7c4d;
+  --warn-dim: rgba(255,124,77,0.12);
+  --good: #22d672;
+  --good-dim: rgba(34,214,114,0.12);
+  --bad: #ff4f6b;
+  --bad-dim: rgba(255,79,107,0.12);
+  --purple: #a78bfa;
+  --font-main: 'Outfit', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.glass {
+  background: rgba(14,17,23,0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.neon-border {
+  border: 1px solid rgba(0,212,170,0.3);
+  box-shadow: 0 0 12px rgba(0,212,170,0.1), inset 0 0 12px rgba(0,212,170,0.04);
+}
+
+/* ============================================================
+   LANDING PAGE
+   ============================================================ */
+#landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,170,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,170,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+}
+
+.grid-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 30%, rgba(0,212,170,0.06) 0%, transparent 70%);
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px 48px;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.22);
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 36px;
+  animation: badge-in 0.6s ease both;
+}
+
+@keyframes badge-in {
+  from { opacity:0; transform: translateY(-12px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+.pulse-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform: scale(1); box-shadow: 0 0 8px var(--accent); }
+  50% { opacity:0.5; transform: scale(0.75); box-shadow: 0 0 4px var(--accent); }
+}
+
+.hero h1 {
+  font-size: clamp(44px, 7vw, 84px);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+  margin-bottom: 20px;
+  animation: hero-in 0.7s 0.1s ease both;
+}
+
+@keyframes hero-in {
+  from { opacity:0; transform: translateY(20px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+.hero h1 .accent { color: var(--accent); }
+.hero h1 .accent-blue { color: var(--accent2); }
+
+.hero-sub {
+  font-size: clamp(15px, 2vw, 18px);
+  color: var(--text2);
+  max-width: 480px;
+  line-height: 1.65;
+  margin-bottom: 40px;
+  font-weight: 400;
+  animation: hero-in 0.7s 0.2s ease both;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 60px;
+  animation: hero-in 0.7s 0.3s ease both;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 15px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(0,212,170,0.4);
+}
+
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 15px 32px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover { border-color: rgba(0,212,170,0.4); color: var(--accent); background: var(--accent-dim); }
+
+/* Animated hero figure */
+.body-preview {
+  width: 110px;
+  height: 185px;
+  margin-bottom: 48px;
+  animation: hero-in 0.7s 0.15s ease both;
+}
+
+.body-preview svg { width: 100%; height: 100%; }
+
+.sk-line {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  fill: none;
+  filter: drop-shadow(0 0 4px rgba(0,212,170,0.7));
+  animation: sk-pulse 2.4s ease-in-out infinite;
+}
+
+.sk-joint {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(0,212,170,0.9));
+  animation: sk-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes sk-pulse {
+  0%,100% { opacity:1; }
+  50% { opacity:0.55; }
+}
+
+/* Feature grid */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  animation: hero-in 0.7s 0.4s ease both;
+}
+
+.feat-card {
+  background: rgba(14,17,23,0.6);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: left;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,170,0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.feat-card:hover { border-color: rgba(0,212,170,0.25); transform: translateY(-2px); }
+.feat-card:hover::before { opacity: 1; }
+
+.feat-icon { font-size: 22px; margin-bottom: 10px; }
+.feat-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 5px; letter-spacing: -0.01em; }
+.feat-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+
+/* ============================================================
+   WORKOUT APP
+   ============================================================ */
+#app {
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+#app.active { display: flex; }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  gap: 12px;
+  min-height: 52px;
+}
+
+.app-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  justify-content: center;
+}
+
+.hstat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.hstat-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+}
+
+.hstat-val.calories { color: var(--warn); }
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-main);
+  transition: all 0.2s;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.icon-btn:hover { border-color: rgba(0,212,170,0.4); color: var(--accent); background: var(--accent-dim); }
+.icon-btn.active { background: rgba(0,212,170,0.15); border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   WORKOUT LAYOUT
+   ============================================================ */
+.workout-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 288px;
+  overflow: hidden;
+  height: calc(100vh - 52px);
+}
+
+@media (max-width: 768px) {
+  .workout-main {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .sidebar { display: none; }
+}
+
+/* ============================================================
+   CAMERA AREA
+   ============================================================ */
+.camera-area {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+#videoEl {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+
+#poseCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+  pointer-events: none;
+}
+
+/* Start overlay */
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8,10,13,0.92);
+  z-index: 10;
+  gap: 18px;
+  padding: 24px;
+}
+
+.cam-icon-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 2px dashed rgba(0,212,170,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  animation: spin-slow 10s linear infinite;
+  position: relative;
+}
+
+.cam-icon-ring::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,212,170,0.12);
+}
+
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+.start-overlay h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.start-overlay p { font-size: 13px; color: var(--text2); text-align: center; max-width: 260px; line-height: 1.55; }
+
+.cam-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  max-width: 260px;
+  width: 100%;
+}
+
+.cam-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text2);
+}
+
+.cam-tip-icon { font-size: 14px; flex-shrink: 0; }
+
+.spinner {
+  width: 30px; height: 30px;
+  border: 2.5px solid rgba(0,212,170,0.15);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.perm-error {
+  color: var(--bad);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 10px 14px;
+  background: var(--bad-dim);
+  border-radius: 8px;
+  border: 1px solid rgba(255,79,107,0.25);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* HUD corner */
+.hud-corner {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 5;
+}
+
+.hud-pill {
+  background: rgba(8,10,13,0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 4px 11px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.hud-fps { color: var(--good); }
+.hud-conf { color: var(--accent2); }
+
+/* Rep flash overlay */
+.rep-flash-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 8;
+}
+
+.rep-flash-num {
+  font-size: 96px;
+  font-weight: 900;
+  color: var(--accent);
+  text-shadow: 0 0 50px rgba(0,212,170,0.8), 0 0 20px rgba(0,212,170,0.5);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.rep-flash-label {
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 20px rgba(0,212,170,0.6);
+}
+
+/* Grade badge on camera */
+.grade-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(8,10,13,0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  z-index: 5;
+  display: none;
+  letter-spacing: 0.04em;
+}
+
+.grade-badge.beginner { color: var(--warn); border-color: rgba(255,124,77,0.3); }
+.grade-badge.intermediate { color: var(--accent2); border-color: rgba(59,158,255,0.3); }
+.grade-badge.advanced { color: var(--accent); border-color: rgba(0,212,170,0.3); }
+.grade-badge.elite { color: var(--purple); border-color: rgba(167,139,250,0.3); }
+
+/* Correction flash */
+.correction-flash {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,79,107,0.9);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 9px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  z-index: 6;
+  border: 1px solid rgba(255,79,107,0.4);
+  max-width: 90%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.correction-flash.show { opacity: 1; }
+
+/* Good form flash */
+.good-flash {
+  position: absolute;
+  bottom: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(34,214,114,0.9);
+  backdrop-filter: blur(8px);
+  color: #000;
+  padding: 9px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.good-flash.show { opacity: 1; }
+
+/* Status bar */
+.status-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 16px;
+  background: linear-gradient(transparent, rgba(8,10,13,0.9));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  display: none;
+}
+
+.posture-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--good);
+  box-shadow: 0 0 10px var(--good);
+  flex-shrink: 0;
+}
+
+.status-dot.bad { background: var(--bad); box-shadow: 0 0 10px var(--bad); }
+.status-dot.warn { background: var(--warn); box-shadow: 0 0 10px var(--warn); }
+
+/* Countdown overlay */
+.countdown-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8,10,13,0.88);
+  z-index: 9;
+  display: none;
+}
+
+.countdown-num {
+  font-size: 140px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+  text-shadow: 0 0 60px rgba(0,212,170,0.6);
+}
+
+.countdown-label {
+  font-size: 18px;
+  color: var(--text2);
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 100px; }
+
+.sidebar-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* Exercise selector */
+.exercise-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.exercise-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-main);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.exercise-btn .ex-icon {
+  font-size: 20px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.exercise-btn:hover { border-color: rgba(0,212,170,0.35); color: var(--text); }
+
+.exercise-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+  box-shadow: 0 0 16px rgba(0,212,170,0.1);
+}
+
+/* Reps */
+.rep-counter-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rep-big {
+  font-size: 58px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  letter-spacing: -0.04em;
+  font-family: var(--font-mono);
+  text-shadow: 0 0 30px rgba(0,212,170,0.25);
+}
+
+.rep-details { text-align: right; }
+.rep-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.rep-good-val { font-size: 20px; font-weight: 700; color: var(--good); font-family: var(--font-mono); }
+
+.rep-progress {
+  height: 4px;
+  background: var(--surface3);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.rep-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), rgba(0,212,170,0.6));
+  border-radius: 100px;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 8px rgba(0,212,170,0.4);
+}
+
+.rep-score-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.rep-score-label { color: var(--muted); }
+.rep-score-val { font-weight: 600; color: var(--good); }
+
+/* Accuracy ring */
+.accuracy-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ring-svg {
+  width: 60px; height: 60px;
+  transform: rotate(-90deg);
+  flex-shrink: 0;
+}
+
+.ring-bg { fill: none; stroke: var(--surface3); stroke-width: 5.5; }
+.ring-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+  filter: drop-shadow(0 0 4px rgba(0,212,170,0.5));
+}
+
+.accuracy-info .pct {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -0.03em;
+}
+
+.accuracy-info .sub { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.accuracy-info .grade-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+/* Joint angles */
+.angles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.angle-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 11px;
+  transition: border-color 0.2s;
+}
+
+.angle-card.active-angle { border-color: rgba(0,212,170,0.3); }
+
+.angle-name {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.angle-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text);
+  transition: color 0.3s;
+  letter-spacing: -0.03em;
+}
+
+.angle-value.good { color: var(--good); }
+.angle-value.bad { color: var(--bad); }
+.angle-value.warn { color: var(--warn); }
+
+.angle-bar {
+  height: 3px;
+  border-radius: 100px;
+  background: var(--surface3);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.angle-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: var(--accent);
+  transition: width 0.25s, background 0.3s;
+}
+
+/* AI Coach panel */
+.audio-panel { display: flex; flex-direction: column; gap: 10px; }
+
+.audio-orb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-orb {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  border: 2px solid rgba(0,212,170,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.audio-orb.speaking {
+  background: rgba(0,212,170,0.22);
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(0,212,170,0.4), inset 0 0 12px rgba(0,212,170,0.08);
+  animation: orb-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes orb-pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.audio-text {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  flex: 1;
+  font-style: italic;
+  transition: color 0.2s;
+}
+
+.audio-text.speaking { color: var(--accent); font-style: normal; }
+
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 2.5px;
+  height: 28px;
+}
+
+.wave-bar {
+  width: 3px;
+  background: rgba(0,212,170,0.25);
+  border-radius: 100px;
+  height: 4px;
+}
+
+.waveform.active .wave-bar { animation: wave-anim 0.8s ease-in-out infinite; }
+
+.wave-bar:nth-child(1) { animation-delay: 0s; }
+.wave-bar:nth-child(2) { animation-delay: 0.08s; }
+.wave-bar:nth-child(3) { animation-delay: 0.16s; }
+.wave-bar:nth-child(4) { animation-delay: 0.04s; }
+.wave-bar:nth-child(5) { animation-delay: 0.12s; }
+.wave-bar:nth-child(6) { animation-delay: 0.2s; }
+.wave-bar:nth-child(7) { animation-delay: 0.06s; }
+.wave-bar:nth-child(8) { animation-delay: 0.14s; }
+.wave-bar:nth-child(9) { animation-delay: 0.1s; }
+.wave-bar:nth-child(10) { animation-delay: 0.18s; }
+
+@keyframes wave-anim {
+  0%,100% { height: 4px; background: rgba(0,212,170,0.3); }
+  50% { height: 20px; background: var(--accent); }
+}
+
+.audio-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.vol-slider {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 3px;
+  cursor: pointer;
+}
+
+.voice-select {
+  font-size: 10.5px;
+  font-family: var(--font-main);
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+  max-width: 110px;
+}
+
+/* Feedback list */
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.feedback-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  animation: fb-in 0.3s ease;
+}
+
+@keyframes fb-in {
+  from { opacity:0; transform: translateY(-4px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+.feedback-item.type-good {
+  background: var(--good-dim);
+  border-color: rgba(34,214,114,0.2);
+  color: #86efac;
+}
+
+.feedback-item.type-warn {
+  background: var(--warn-dim);
+  border-color: rgba(255,124,77,0.2);
+  color: #fdba74;
+}
+
+.feedback-item.type-info {
+  background: var(--accent2-dim);
+  border-color: rgba(59,158,255,0.2);
+  color: #93c5fd;
+}
+
+.fi-icon { flex-shrink: 0; font-size: 13px; }
+
+/* Session stats */
+.session-timer {
+  font-size: 30px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.stat-label { color: var(--muted); }
+.stat-val { font-weight: 600; color: var(--good); font-family: var(--font-mono); }
+.stat-val.warn { color: var(--warn); }
+.stat-val.cal { color: #fb923c; }
+.stat-val.streak { color: var(--purple); }
+
+/* Streak bar */
+.streak-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.streak-icon { font-size: 16px; }
+.streak-label { font-size: 11px; color: var(--muted); }
+.streak-val { font-size: 18px; font-weight: 800; font-family: var(--font-mono); color: var(--purple); margin-left: auto; }
+
+/* ============================================================
+   MOBILE DOCK
+   ============================================================ */
+.mobile-dock {
+  display: none;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .mobile-dock { display: flex; }
+  .header-stats { display: none; }
+  .app-header { padding: 10px 14px; }
+  .icon-btn { padding: 6px 10px; font-size: 11px; }
+}
+
+.dock-rep {
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  min-width: 52px;
+  font-family: var(--font-mono);
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 20px rgba(0,212,170,0.25);
+}
+
+.dock-info { flex: 1; min-width: 0; }
+.dock-status { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dock-ex { font-size: 11px; color: var(--muted); }
+
+.dock-controls { display: flex; gap: 6px; align-items: center; }
+
+/* Mobile exercise quick-select */
+.mobile-ex-row {
+  display: none;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 8px 12px;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.mobile-ex-row::-webkit-scrollbar { display: none; }
+
+@media (max-width: 768px) {
+  .mobile-ex-row { display: flex; }
+}
+
+.mob-ex-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font-main);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.mob-ex-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+
+/* ============================================================
+   SESSION SUMMARY MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8,10,13,0.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  display: none;
+}
+
+.modal-overlay.show { display: flex; }
+
+.summary-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,170,0.08);
+  animation: modal-in 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes modal-in {
+  from { opacity:0; transform: scale(0.9) translateY(20px); }
+  to { opacity:1; transform: scale(1) translateY(0); }
+}
+
+.modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.modal-badge.beginner { background: var(--warn-dim); border: 1px solid rgba(255,124,77,0.3); color: var(--warn); }
+.modal-badge.intermediate { background: var(--accent2-dim); border: 1px solid rgba(59,158,255,0.3); color: var(--accent2); }
+.modal-badge.advanced { background: var(--accent-dim); border: 1px solid rgba(0,212,170,0.3); color: var(--accent); }
+.modal-badge.elite { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.3); color: var(--purple); }
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+
+.modal-subtitle {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 24px;
+}
+
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.sum-stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.sum-stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.sum-stat-val {
+  font-size: 28px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -0.04em;
+}
+
+.sum-stat-val.teal { color: var(--accent); }
+.sum-stat-val.green { color: var(--good); }
+.sum-stat-val.orange { color: var(--warn); }
+.sum-stat-val.blue { color: var(--accent2); }
+.sum-stat-val.purple { color: var(--purple); }
+
+.modal-accuracy-bar {
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.modal-acc-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.modal-acc-label span:last-child { font-weight: 700; }
+
+.modal-acc-track {
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.modal-acc-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 10px rgba(0,212,170,0.4);
+  transition: width 1s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.modal-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-btns .btn-primary { flex: 1; padding: 13px; }
+.modal-btns .btn-secondary { flex: 1; padding: 13px; }
+
+/* ============================================================
+   RESPONSIVE HEADER HIDE
+   ============================================================ */
+@media (max-width: 480px) {
+  .app-title { font-size: 13px; }
+  .icon-btn span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LANDING PAGE
+     ============================================================ -->
+<div id="landing">
+  <div class="grid-bg"></div>
+  <div class="hero">
+
+    <div class="logo-badge">
+      <span class="pulse-dot"></span>
+      AI-Powered · Real-Time · MediaPipe
+    </div>
+
+    <h1>AI <span class="accent">Form</span><br><span class="accent-blue">Fixer</span></h1>
+    <p class="hero-sub">Real-time pose detection &amp; voice coaching that corrects your form as you move. No screen-watching required.</p>
+
+    <div class="body-preview">
+      <svg viewBox="0 0 100 180" xmlns="http://www.w3.org/2000/svg">
+        <circle class="sk-joint" cx="50" cy="17" r="7"/>
+        <line class="sk-line" x1="50" y1="24" x2="50" y2="42"/>
+        <line class="sk-line" x1="22" y1="42" x2="78" y2="42"/>
+        <line class="sk-line" x1="22" y1="42" x2="11" y2="72"/>
+        <line class="sk-line" x1="11" y1="72" x2="5" y2="100"/>
+        <line class="sk-line" x1="78" y1="42" x2="89" y2="72"/>
+        <line class="sk-line" x1="89" y1="72" x2="95" y2="100"/>
+        <line class="sk-line" x1="22" y1="42" x2="26" y2="100"/>
+        <line class="sk-line" x1="78" y1="42" x2="74" y2="100"/>
+        <line class="sk-line" x1="26" y1="100" x2="74" y2="100"/>
+        <line class="sk-line" x1="32" y1="100" x2="28" y2="140"/>
+        <line class="sk-line" x1="68" y1="100" x2="72" y2="140"/>
+        <line class="sk-line" x1="28" y1="140" x2="26" y2="170"/>
+        <line class="sk-line" x1="72" y1="140" x2="74" y2="170"/>
+        <circle class="sk-joint" cx="22" cy="42" r="4"/>
+        <circle class="sk-joint" cx="78" cy="42" r="4"/>
+        <circle class="sk-joint" cx="11" cy="72" r="3"/>
+        <circle class="sk-joint" cx="89" cy="72" r="3"/>
+        <circle class="sk-joint" cx="26" cy="100" r="4"/>
+        <circle class="sk-joint" cx="74" cy="100" r="4"/>
+        <circle class="sk-joint" cx="28" cy="140" r="4"/>
+        <circle class="sk-joint" cx="72" cy="140" r="4"/>
+        <circle class="sk-joint" cx="26" cy="170" r="3"/>
+        <circle class="sk-joint" cx="74" cy="170" r="3"/>
+      </svg>
+    </div>
+
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="startApp()">▶ Start Workout</button>
+      <button class="btn-secondary" onclick="startApp()">Try Live Demo</button>
+    </div>
+
+    <div class="features">
+      <div class="feat-card">
+        <div class="feat-icon">🎙️</div>
+        <h3>Audio Coaching</h3>
+        <p>Real-time spoken corrections. Train without watching a screen.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🦴</div>
+        <h3>Pose Tracking</h3>
+        <p>33 body landmarks tracked at up to 30 FPS via MediaPipe.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📐</div>
+        <h3>Joint Angles</h3>
+        <p>Live knee, hip, elbow angle readings with form grading.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💪</div>
+        <h3>4 Exercises</h3>
+        <p>Squats, Push-ups, Shoulder Press &amp; Bicep Curls tracked.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ============================================================
+     WORKOUT APP
+     ============================================================ -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-title">⚡ AI Form Fixer</div>
+
+    <div class="header-stats">
+      <div class="hstat">
+        <span>⏱</span>
+        <span class="hstat-val" id="sessionTimerHeader">00:00</span>
+      </div>
+      <div class="hstat">
+        <span>🔥</span>
+        <span class="hstat-val calories" id="calorieHeader">0 kcal</span>
+      </div>
+      <div class="hstat">
+        <span>🎯</span>
+        <span class="hstat-val" id="accuracyHeader">–%</span>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <button class="icon-btn" id="muteBtn" onclick="toggleMute()">🔊 Audio</button>
+      <button class="icon-btn" onclick="endSession()">📊 Summary</button>
+      <button class="icon-btn" onclick="resetSession()">↺ Reset</button>
+      <button class="icon-btn" onclick="goHome()">← Exit</button>
+    </div>
+  </div>
+
+  <!-- Mobile exercise quick row -->
+  <div class="mobile-ex-row" id="mobileExRow">
+    <button class="mob-ex-btn selected" onclick="setExercise('squat',this,'mob')">🏋️ Squat</button>
+    <button class="mob-ex-btn" onclick="setExercise('pushup',this,'mob')">💪 Push-up</button>
+    <button class="mob-ex-btn" onclick="setExercise('press',this,'mob')">🙌 Press</button>
+    <button class="mob-ex-btn" onclick="setExercise('curl',this,'mob')">💪 Curl</button>
+  </div>
+
+  <div class="workout-main" id="workoutMain">
+
+    <!-- Camera -->
+    <div class="camera-area">
+      <video id="videoEl" autoplay muted playsinline></video>
+      <canvas id="poseCanvas"></canvas>
+
+      <!-- Start overlay -->
+      <div class="start-overlay" id="startOverlay">
+        <div class="cam-icon-ring">📷</div>
+        <h2>Enable Camera</h2>
+        <p>Allow camera access to start real-time AI pose detection and coaching.</p>
+
+        <div class="cam-tips">
+          <div class="cam-tip"><span class="cam-tip-icon">📏</span>Stand 6–8 feet from camera</div>
+          <div class="cam-tip"><span class="cam-tip-icon">💡</span>Good lighting improves accuracy</div>
+          <div class="cam-tip"><span class="cam-tip-icon">👕</span>Wear fitted clothing</div>
+          <div class="cam-tip"><span class="cam-tip-icon">📐</span>Full body visible in frame</div>
+        </div>
+
+        <div class="spinner" id="cameraSpinner" style="display:none"></div>
+        <button class="btn-primary" id="startCameraBtn" onclick="initCamera()">Enable Camera &amp; Start</button>
+        <button class="btn-secondary" id="demoModeBtn" onclick="initSimulation()" style="font-size:13px;padding:10px 20px">Demo Mode (No Camera)</button>
+        <div id="camError" class="perm-error" style="display:none"></div>
+      </div>
+
+      <!-- Countdown overlay -->
+      <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-num" id="countdownNum">3</div>
+        <div class="countdown-label" id="countdownLabel">Get ready...</div>
+      </div>
+
+      <!-- HUD pills -->
+      <div class="hud-corner" id="hud" style="display:none">
+        <div class="hud-pill hud-fps" id="fpsPill">-- FPS</div>
+        <div class="hud-pill hud-conf" id="confPill">-- conf</div>
+      </div>
+
+      <!-- Grade badge -->
+      <div class="grade-badge" id="gradeBadge">–</div>
+
+      <!-- Rep flash -->
+      <div class="rep-flash-overlay" id="repFlash">
+        <div class="rep-flash-num" id="repFlashNum">0</div>
+        <div class="rep-flash-label">REPS</div>
+      </div>
+
+      <!-- Correction / good flashes -->
+      <div class="correction-flash" id="correctionFlash"></div>
+      <div class="good-flash" id="goodFlash"></div>
+
+      <!-- Status bar -->
+      <div class="status-bar" id="statusBar">
+        <div class="posture-status">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">Detecting...</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)" id="exerciseLabel">Squats</div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+
+      <!-- Exercise selector -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Exercise Mode</div>
+        <div class="exercise-grid">
+          <button class="exercise-btn selected" id="ex-squat" onclick="setExercise('squat',this,'desk')">
+            <span class="ex-icon">🏋️</span>Squat
+          </button>
+          <button class="exercise-btn" id="ex-pushup" onclick="setExercise('pushup',this,'desk')">
+            <span class="ex-icon">💪</span>Push-up
+          </button>
+          <button class="exercise-btn" id="ex-press" onclick="setExercise('press',this,'desk')">
+            <span class="ex-icon">🙌</span>Press
+          </button>
+          <button class="exercise-btn" id="ex-curl" onclick="setExercise('curl',this,'desk')">
+            <span class="ex-icon">🦾</span>Curl
+          </button>
+        </div>
+      </div>
+
+      <!-- Reps counter -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Repetitions</div>
+        <div class="rep-counter-display">
+          <div class="rep-big" id="repCount">0</div>
+          <div class="rep-details">
+            <div class="rep-label">Good Form</div>
+            <div class="rep-good-val" id="goodReps">0</div>
+          </div>
+        </div>
+        <div class="rep-progress">
+          <div class="rep-progress-fill" id="repProgress" style="width:0%"></div>
+        </div>
+        <div class="rep-score-row">
+          <span class="rep-score-label">Target: <span id="targetReps">10</span> reps</span>
+          <span class="rep-score-val" id="accuracyText">–%</span>
+        </div>
+      </div>
+
+      <!-- Accuracy ring -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Form Accuracy</div>
+        <div class="accuracy-wrap">
+          <svg class="ring-svg" viewBox="0 0 60 60">
+            <circle class="ring-bg" cx="30" cy="30" r="25"/>
+            <circle class="ring-fill" id="ringFill" cx="30" cy="30" r="25"
+              stroke-dasharray="157.08"
+              stroke-dashoffset="157.08"/>
+          </svg>
+          <div class="accuracy-info">
+            <div class="pct" id="accuracyPct">–%</div>
+            <div class="sub">form accuracy</div>
+            <div class="grade-text" id="gradeText" style="color:var(--muted)">–</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Joint angles -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Joint Angles</div>
+        <div class="angles-grid">
+          <div class="angle-card" id="card-angA">
+            <div class="angle-name" id="label-angA">Knee L</div>
+            <div class="angle-value" id="angA">–°</div>
+            <div class="angle-bar"><div class="angle-bar-fill" id="barA" style="width:0%"></div></div>
+          </div>
+          <div class="angle-card" id="card-angB">
+            <div class="angle-name" id="label-angB">Knee R</div>
+            <div class="angle-value" id="angB">–°</div>
+            <div class="angle-bar"><div class="angle-bar-fill" id="barB" style="width:0%"></div></div>
+          </div>
+          <div class="angle-card" id="card-angC">
+            <div class="angle-name" id="label-angC">Hip L</div>
+            <div class="angle-value" id="angC">–°</div>
+            <div class="angle-bar"><div class="angle-bar-fill" id="barC" style="width:0%"></div></div>
+          </div>
+          <div class="angle-card" id="card-angD">
+            <div class="angle-name" id="label-angD">Elbow L</div>
+            <div class="angle-value" id="angD">–°</div>
+            <div class="angle-bar"><div class="angle-bar-fill" id="barD" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Coach -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">AI Coach</div>
+        <div class="audio-panel">
+          <div class="audio-orb-row">
+            <div class="audio-orb" id="audioOrb" onclick="toggleMute()" title="Click to mute/unmute">🎙️</div>
+            <div class="audio-text" id="audioText">Ready to coach...</div>
+          </div>
+          <div class="waveform" id="waveform">
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+          <div class="audio-controls">
+            <span style="font-size:11px;color:var(--muted)">Vol</span>
+            <input type="range" class="vol-slider" min="0" max="1" step="0.05" value="0.9" id="volSlider" oninput="setVolume(this.value)">
+            <select class="voice-select" id="voiceSelect" onchange="setVoice(this.value)">
+              <option value="">Auto Voice</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live feedback -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Live Feedback</div>
+        <div class="feedback-list" id="feedbackList">
+          <div class="feedback-item type-info">
+            <span class="fi-icon">ℹ️</span>
+            <span>Enable camera to start receiving real-time form feedback.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Session stats -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Session Stats</div>
+        <div class="session-timer" id="sessionTimer">00:00</div>
+        <div class="stats-grid">
+          <div class="stat-row">
+            <span class="stat-label">Total reps</span>
+            <span class="stat-val" id="statTotal">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Good form reps</span>
+            <span class="stat-val" id="statGood">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Corrections given</span>
+            <span class="stat-val warn" id="statCorrections">0</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Calories burned</span>
+            <span class="stat-val cal" id="statCalories">0</span>
+          </div>
+        </div>
+        <div class="streak-display">
+          <span class="streak-icon">🔥</span>
+          <span class="streak-label">Best streak</span>
+          <span class="streak-val" id="streakVal">0</span>
+        </div>
+      </div>
+
+    </div><!-- /sidebar -->
+  </div><!-- /workout-main -->
+
+  <!-- Mobile dock -->
+  <div class="mobile-dock">
+    <div class="dock-rep" id="dockRep">0</div>
+    <div class="dock-info">
+      <div class="dock-status" id="dockStatus">Position yourself in frame</div>
+      <div class="dock-ex" id="dockEx">🏋️ Squats</div>
+    </div>
+    <div class="dock-controls">
+      <div class="audio-orb" id="dockOrb" style="width:36px;height:36px;font-size:14px" onclick="toggleMute()">🎙️</div>
+      <button class="icon-btn" onclick="endSession()">📊</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+
+<!-- Session Summary Modal -->
+<div class="modal-overlay" id="summaryModal">
+  <div class="summary-modal">
+    <div class="modal-badge" id="modalBadge">Beginner</div>
+    <div class="modal-title">Workout Complete!</div>
+    <div class="modal-subtitle" id="modalSubtitle">Here's your session breakdown.</div>
+
+    <div class="summary-stats-grid">
+      <div class="sum-stat">
+        <div class="sum-stat-label">Total Reps</div>
+        <div class="sum-stat-val teal" id="sumReps">0</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-stat-label">Good Form</div>
+        <div class="sum-stat-val green" id="sumGood">0</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-stat-label">Duration</div>
+        <div class="sum-stat-val blue" id="sumTime">00:00</div>
+      </div>
+      <div class="sum-stat">
+        <div class="sum-stat-label">Calories</div>
+        <div class="sum-stat-val orange" id="sumCal">0</div>
+      </div>
+    </div>
+
+    <div class="modal-accuracy-bar">
+      <div class="modal-acc-label">
+        <span>Form Accuracy</span>
+        <span id="sumAccuracy">–%</span>
+      </div>
+      <div class="modal-acc-track">
+        <div class="modal-acc-fill" id="sumAccFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeSummary()">Continue</button>
+      <button class="btn-primary" onclick="resetAndClose()">New Session</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MediaPipe scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+<script>
+/* ============================================================
+   STATE MANAGEMENT
+   ============================================================ */
+const state = {
+  exercise: 'squat',
+  reps: 0,
+  goodReps: 0,
+  corrections: 0,
+  repState: 'neutral',   // neutral | down | up (varies per exercise)
+  lastRepTime: 0,
+  sessionStart: null,
+  timerInterval: null,
+  poseActive: false,
+  muted: false,
+  volume: 0.9,
+  selectedVoice: null,
+  formGood: true,
+  confidence: 0,
+  fps: 0,
+  calories: 0,
+  streak: 0,
+  bestStreak: 0,
+  lastAngles: {},
+  // Smoothing buffers
+  angleBuffers: { a:[], b:[], c:[], d:[] },
+  SMOOTH_N: 5,
+  targetReps: 10,
+  simMode: false,
+  // Curl-specific: track elbow position for swing detection
+  lastShoulderX: null,
+  lastElbowX: null,
+};
+
+// Calories per rep by exercise
+const CAL_PER_REP = { squat: 0.32, pushup: 0.29, press: 0.22, curl: 0.18 };
+
+// Landmark indices
+const LM = {
+  NOSE:0,
+  LEFT_SHOULDER:11, RIGHT_SHOULDER:12,
+  LEFT_ELBOW:13,    RIGHT_ELBOW:14,
+  LEFT_WRIST:15,    RIGHT_WRIST:16,
+  LEFT_HIP:23,      RIGHT_HIP:24,
+  LEFT_KNEE:25,     RIGHT_KNEE:26,
+  LEFT_ANKLE:27,    RIGHT_ANKLE:28
+};
+
+// Exercise definitions (angle display labels)
+const EXERCISE_META = {
+  squat:  { label:'🏋️ Squats',  angA:'Knee L', angB:'Knee R', angC:'Hip L', angD:'Hip R',   cal:0.32 },
+  pushup: { label:'💪 Push-ups', angA:'Elbow L',angB:'Elbow R',angC:'Body', angD:'Shoulder',cal:0.29 },
+  press:  { label:'🙌 Press',    angA:'Elbow L',angB:'Elbow R',angC:'Trunk',angD:'Wrist',    cal:0.22 },
+  curl:   { label:'🦾 Curls',    angA:'Elbow L',angB:'Elbow R',angC:'Shoulder',angD:'Body',  cal:0.18 },
+};
+
+/* ============================================================
+   VOICE COOLDOWNS — prevent repeat nagging
+   ============================================================ */
+const voiceCooldowns = {};
+function canSpeak(key, cooldownMs = 4000) {
+  const now = Date.now();
+  if (voiceCooldowns[key] && (now - voiceCooldowns[key]) < cooldownMs) return false;
+  voiceCooldowns[key] = now;
+  return true;
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+function startApp() {
+  gsap.to('#landing', { opacity:0, duration:0.4, onComplete: () => {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    gsap.from('#app', { opacity:0, duration:0.4 });
+  }});
+  initVoice();
+  startTimer();
+}
+
+function goHome() {
+  stopCamera();
+  clearInterval(state.timerInterval);
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('app').classList.remove('active');
+  gsap.from('#landing', { opacity:0, duration:0.4 });
+}
+
+/* ============================================================
+   VOICE SYSTEM
+   ============================================================ */
+let speechQueue = [];
+let speechActive = false;
+let speechStuck = 0;  // detect stuck queue
+
+function initVoice() {
+  if (!('speechSynthesis' in window)) return;
+  // Trigger voice list load
+  window.speechSynthesis.getVoices();
+  setTimeout(() => {
+    const voices = speechSynthesis.getVoices();
+    populateVoices(voices);
+  }, 500);
+  speechSynthesis.onvoiceschanged = () => populateVoices(speechSynthesis.getVoices());
+}
+
+function populateVoices(voices) {
+  if (!voices.length) return;
+  const sel = document.getElementById('voiceSelect');
+  // Clear old options except default
+  while (sel.options.length > 1) sel.remove(1);
+
+  voices.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = v.name.replace('Microsoft ', '').replace(' Online (Natural)', '').substring(0, 22);
+    sel.appendChild(opt);
+  });
+
+  // Auto-select best English voice (prefer natural/neural voices)
+  const preferredNames = ['Aria','Jenny','Guy','Emma','Brian','Google UK English Female','Samantha'];
+  let bestIdx = -1;
+  for (const name of preferredNames) {
+    const idx = voices.findIndex(v => v.name.includes(name));
+    if (idx >= 0) { bestIdx = idx; break; }
+  }
+  if (bestIdx < 0) bestIdx = voices.findIndex(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
+  if (bestIdx < 0) bestIdx = voices.findIndex(v => v.lang.startsWith('en'));
+  if (bestIdx >= 0) {
+    sel.value = bestIdx;
+    state.selectedVoice = voices[bestIdx];
+  }
+}
+
+function setVoice(idx) {
+  if (idx === '') { state.selectedVoice = null; return; }
+  const voices = speechSynthesis.getVoices();
+  state.selectedVoice = voices[parseInt(idx)] || null;
+}
+
+function setVolume(v) { state.volume = parseFloat(v); }
+
+function toggleMute() {
+  state.muted = !state.muted;
+  const btn = document.getElementById('muteBtn');
+  btn.textContent = state.muted ? '🔇 Muted' : '🔊 Audio';
+  btn.classList.toggle('active', state.muted);
+  document.getElementById('audioOrb').textContent = state.muted ? '🔇' : '🎙️';
+  document.getElementById('dockOrb').textContent = state.muted ? '🔇' : '🎙️';
+  if (state.muted) { speechSynthesis.cancel(); speechQueue = []; speechActive = false; }
+}
+
+function speak(text, priority = false) {
+  if (state.muted || !('speechSynthesis' in window)) return;
+  if (priority) {
+    speechSynthesis.cancel();
+    speechQueue = [];
+    speechActive = false;
+  }
+  // Don't queue duplicate consecutive messages
+  if (speechQueue[speechQueue.length - 1] === text) return;
+  speechQueue.push(text);
+  drainQueue();
+}
+
+function drainQueue() {
+  // Reset stuck speech state after 8 seconds
+  if (speechActive) {
+    speechStuck++;
+    if (speechStuck > 40) { speechActive = false; speechStuck = 0; }
+    return;
+  }
+  if (!speechQueue.length) return;
+  speechStuck = 0;
+
+  const text = speechQueue.shift();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 1.05;
+  utt.pitch = 1.02;
+  utt.volume = state.volume;
+  if (state.selectedVoice) utt.voice = state.selectedVoice;
+
+  utt.onstart = () => { speechActive = true; setAudioOrb(true, text); };
+  utt.onend = () => { speechActive = false; setAudioOrb(false); setTimeout(drainQueue, 250); };
+  utt.onerror = () => { speechActive = false; setAudioOrb(false); setTimeout(drainQueue, 250); };
+
+  try { speechSynthesis.speak(utt); }
+  catch(e) { speechActive = false; }
+}
+
+function setAudioOrb(active, text = '') {
+  const ids = ['audioOrb','dockOrb'];
+  const orb = document.getElementById('audioOrb');
+  const dOrb = document.getElementById('dockOrb');
+  const txt = document.getElementById('audioText');
+  const wave = document.getElementById('waveform');
+
+  if (active) {
+    orb.classList.add('speaking');
+    dOrb.classList.add('speaking');
+    txt.classList.add('speaking');
+    txt.textContent = '"' + text + '"';
+    wave.classList.add('active');
+  } else {
+    orb.classList.remove('speaking');
+    dOrb.classList.remove('speaking');
+    txt.classList.remove('speaking');
+    txt.textContent = 'Ready to coach...';
+    wave.classList.remove('active');
+  }
+}
+
+/* ============================================================
+   CAMERA & MEDIAPIPE
+   ============================================================ */
+let videoStream = null;
+let mpPose = null;
+let mpCamera = null;
+let resizeObserver = null;
+
+async function initCamera() {
+  const btn = document.getElementById('startCameraBtn');
+  const demoBtn = document.getElementById('demoModeBtn');
+  const spinner = document.getElementById('cameraSpinner');
+  const err = document.getElementById('camError');
+
+  btn.style.display = 'none';
+  demoBtn.style.display = 'none';
+  spinner.style.display = 'block';
+  err.style.display = 'none';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'user',
+        width: { ideal: 1280, min: 640 },
+        height: { ideal: 720, min: 480 }
+      },
+      audio: false
+    });
+    videoStream = stream;
+    const video = document.getElementById('videoEl');
+    video.srcObject = stream;
+
+    await new Promise((res, rej) => {
+      video.onloadedmetadata = res;
+      video.onerror = rej;
+    });
+    await video.play();
+
+    // Show session
+    document.getElementById('startOverlay').style.display = 'none';
+    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('statusBar').style.display = 'flex';
+    document.getElementById('gradeBadge').style.display = 'block';
+
+    state.poseActive = true;
+    setupCanvas();
+    startCountdown(() => {
+      initMediaPipe();
+      speak("Camera ready. Let's work. Start when you're comfortable.", false);
+    });
+
+  } catch(e) {
+    spinner.style.display = 'none';
+    btn.style.display = 'block';
+    demoBtn.style.display = 'block';
+    err.style.display = 'block';
+    err.textContent = e.name === 'NotAllowedError'
+      ? '⚠ Camera permission denied. Please allow camera access in browser settings, then try again.'
+      : e.name === 'NotFoundError'
+        ? '⚠ No camera found. Connect a camera or try Demo Mode.'
+        : `⚠ Camera error: ${e.message}`;
+  }
+}
+
+function stopCamera() {
+  state.poseActive = false;
+  if (mpCamera) { try { mpCamera.stop(); } catch(e){} mpCamera = null; }
+  if (mpPose) { try { mpPose.close(); } catch(e){} mpPose = null; }
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  if (resizeObserver) { resizeObserver.disconnect(); resizeObserver = null; }
+  speechSynthesis.cancel();
+  speechQueue = [];
+  speechActive = false;
+}
+
+function setupCanvas() {
+  const canvas = document.getElementById('poseCanvas');
+  const video = document.getElementById('videoEl');
+
+  function resize() {
+    const rect = video.getBoundingClientRect();
+    canvas.width = rect.width || 640;
+    canvas.height = rect.height || 480;
+  }
+  resize();
+
+  resizeObserver = new ResizeObserver(resize);
+  resizeObserver.observe(video);
+}
+
+function initMediaPipe() {
+  const video = document.getElementById('videoEl');
+
+  if (typeof Pose === 'undefined') {
+    console.warn('MediaPipe Pose not available – falling back to simulation');
+    runSimulation();
+    return;
+  }
+
+  mpPose = new Pose({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
+  });
+
+  mpPose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    smoothSegmentation: false,
+    minDetectionConfidence: 0.55,
+    minTrackingConfidence: 0.55
+  });
+
+  mpPose.onResults(onPoseResults);
+
+  if (typeof Camera !== 'undefined') {
+    mpCamera = new Camera(video, {
+      onFrame: async () => {
+        if (mpPose && state.poseActive) await mpPose.send({ image: video });
+      },
+      width: 1280, height: 720
+    });
+    mpCamera.start();
+  } else {
+    // Fallback: process frames manually
+    const processFrame = async () => {
+      if (!state.poseActive) return;
+      if (mpPose) await mpPose.send({ image: video });
+      requestAnimationFrame(processFrame);
+    };
+    requestAnimationFrame(processFrame);
+  }
+}
+
+/* Initialise from "Demo Mode" button (no camera) */
+function initSimulation() {
+  document.getElementById('startOverlay').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('statusBar').style.display = 'flex';
+  document.getElementById('gradeBadge').style.display = 'block';
+  state.poseActive = true;
+  state.simMode = true;
+  setupCanvas();
+  startCountdown(() => {
+    runSimulation();
+    speak("Demo mode active. I'm simulating perfect squat form. Enable your camera for real coaching.");
+  });
+}
+
+/* ============================================================
+   WARM-UP COUNTDOWN
+   ============================================================ */
+function startCountdown(onDone) {
+  const overlay = document.getElementById('countdownOverlay');
+  const numEl = document.getElementById('countdownNum');
+  const lblEl = document.getElementById('countdownLabel');
+  overlay.style.display = 'flex';
+  let count = 3;
+
+  function tick() {
+    if (count > 0) {
+      numEl.textContent = count;
+      lblEl.textContent = count === 3 ? 'Get ready...' : count === 2 ? 'Set your position' : 'Go!';
+      gsap.fromTo(numEl, { scale:1.4, opacity:0 }, { scale:1, opacity:1, duration:0.35 });
+      count--;
+      setTimeout(tick, 900);
+    } else {
+      overlay.style.display = 'none';
+      onDone();
+    }
+  }
+  tick();
+}
+
+/* ============================================================
+   JOINT ANGLE MATH (dot-product method — more robust)
+   ============================================================ */
+function calcAngle(a, b, c) {
+  const ax = a.x - b.x, ay = a.y - b.y;
+  const cx = c.x - b.x, cy = c.y - b.y;
+  const dot = ax * cx + ay * cy;
+  const cross = ax * cy - ay * cx;
+  const angle = Math.atan2(Math.abs(cross), dot) * 180 / Math.PI;
+  return Math.max(0, Math.min(180, angle));
+}
+
+function lm(landmarks, idx) {
+  const p = landmarks[idx];
+  return { x: p.x, y: p.y, z: p.z || 0, vis: p.visibility || 0 };
+}
+
+function smoothAngle(buf, val, n) {
+  buf.push(val);
+  if (buf.length > n) buf.shift();
+  return buf.reduce((s, v) => s + v, 0) / buf.length;
+}
+
+/* ============================================================
+   FPS TRACKING
+   ============================================================ */
+let frameCount = 0, lastFpsMs = Date.now();
+
+function trackFPS() {
+  frameCount++;
+  const now = Date.now();
+  if (now - lastFpsMs >= 1000) {
+    state.fps = frameCount;
+    frameCount = 0;
+    lastFpsMs = now;
+    const el = document.getElementById('fpsPill');
+    if (el) {
+      el.textContent = `${state.fps} FPS`;
+      el.style.color = state.fps >= 24 ? 'var(--good)' : state.fps >= 15 ? 'var(--warn)' : 'var(--bad)';
+    }
+  }
+}
+
+/* ============================================================
+   POSE RESULTS HANDLER
+   ============================================================ */
+function onPoseResults(results) {
+  if (!state.poseActive) return;
+
+  const canvas = document.getElementById('poseCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  trackFPS();
+
+  if (!results.poseLandmarks || results.poseLandmarks.length < 29) {
+    updateStatus('No person detected — step into frame', 'warn');
+    return;
+  }
+
+  const landmarks = results.poseLandmarks;
+
+  // Confidence (average visibility of key landmarks)
+  const keyIdxs = [11,12,13,14,15,16,23,24,25,26,27,28];
+  const avgVis = keyIdxs.reduce((s,i) => s + (landmarks[i]?.visibility || 0), 0) / keyIdxs.length;
+  state.confidence = Math.round(avgVis * 100);
+  const confEl = document.getElementById('confPill');
+  if (confEl) confEl.textContent = `${state.confidence}% conf`;
+
+  // Calculate all angles
+  const kneeL   = calcAngle(lm(landmarks, LM.LEFT_HIP),      lm(landmarks, LM.LEFT_KNEE),   lm(landmarks, LM.LEFT_ANKLE));
+  const kneeR   = calcAngle(lm(landmarks, LM.RIGHT_HIP),     lm(landmarks, LM.RIGHT_KNEE),  lm(landmarks, LM.RIGHT_ANKLE));
+  const hipL    = calcAngle(lm(landmarks, LM.LEFT_SHOULDER), lm(landmarks, LM.LEFT_HIP),    lm(landmarks, LM.LEFT_KNEE));
+  const hipR    = calcAngle(lm(landmarks, LM.RIGHT_SHOULDER),lm(landmarks, LM.RIGHT_HIP),   lm(landmarks, LM.RIGHT_KNEE));
+  const elbowL  = calcAngle(lm(landmarks, LM.LEFT_SHOULDER), lm(landmarks, LM.LEFT_ELBOW),  lm(landmarks, LM.LEFT_WRIST));
+  const elbowR  = calcAngle(lm(landmarks, LM.RIGHT_SHOULDER),lm(landmarks, LM.RIGHT_ELBOW), lm(landmarks, LM.RIGHT_WRIST));
+
+  // Smooth all angles
+  const sKneeL  = smoothAngle(state.angleBuffers.a, kneeL, state.SMOOTH_N);
+  const sKneeR  = smoothAngle(state.angleBuffers.b, kneeR, state.SMOOTH_N);
+  const sHipL   = smoothAngle(state.angleBuffers.c, hipL, state.SMOOTH_N);
+  const sElbowL = smoothAngle(state.angleBuffers.d, elbowL, state.SMOOTH_N);
+
+  const angles = { kneeL:sKneeL, kneeR:sKneeR, hipL:sHipL, hipR, elbowL:sElbowL, elbowR };
+  state.lastAngles = angles;
+
+  // Exercise-specific processing
+  const issues = [];
+  if (state.exercise === 'squat')  processSquat(landmarks, angles, issues);
+  else if (state.exercise === 'pushup') processPushup(landmarks, angles, issues);
+  else if (state.exercise === 'press')  processPress(landmarks, angles, issues);
+  else if (state.exercise === 'curl')   processCurl(landmarks, angles, issues);
+
+  // Update angle display per exercise
+  updateAnglesDisplay(angles);
+
+  // Form status
+  state.formGood = issues.length === 0;
+  const dot = document.getElementById('statusDot');
+  if (issues.length > 0) {
+    dot.className = 'status-dot bad';
+    updateStatus(issues[0]);
+  } else {
+    dot.className = 'status-dot';
+    updateStatus('Good form — keep it up!');
+  }
+
+  // Draw skeleton
+  drawSkeleton(ctx, landmarks, canvas.width, canvas.height, state.formGood);
+  drawAngleOverlay(ctx, landmarks, canvas.width, canvas.height, angles);
+}
+
+/* ============================================================
+   ANGLE DISPLAY (per exercise)
+   ============================================================ */
+function updateAnglesDisplay(angles) {
+  const meta = EXERCISE_META[state.exercise];
+  let vals;
+
+  if (state.exercise === 'squat') {
+    vals = [
+      { id:'A', val:angles.kneeL,  min:60, max:170 },
+      { id:'B', val:angles.kneeR,  min:60, max:170 },
+      { id:'C', val:angles.hipL,   min:60, max:180 },
+      { id:'D', val:angles.hipR,   min:60, max:180 },
+    ];
+  } else if (state.exercise === 'pushup') {
+    vals = [
+      { id:'A', val:angles.elbowL, min:60, max:180 },
+      { id:'B', val:angles.elbowR, min:60, max:180 },
+      { id:'C', val:angles.hipL,   min:140, max:180 },
+      { id:'D', val:angles.hipR,   min:140, max:180 },
+    ];
+  } else if (state.exercise === 'press') {
+    vals = [
+      { id:'A', val:angles.elbowL, min:60, max:180 },
+      { id:'B', val:angles.elbowR, min:60, max:180 },
+      { id:'C', val:angles.hipL,   min:140, max:180 },
+      { id:'D', val:angles.hipR,   min:140, max:180 },
+    ];
+  } else { // curl
+    vals = [
+      { id:'A', val:angles.elbowL, min:30, max:170 },
+      { id:'B', val:angles.elbowR, min:30, max:170 },
+      { id:'C', val:angles.hipL,   min:140, max:180 },
+      { id:'D', val:angles.hipR,   min:140, max:180 },
+    ];
+  }
+
+  vals.forEach(({ id, val, min, max }) => {
+    const el = document.getElementById('ang' + id);
+    const bar = document.getElementById('bar' + id);
+    if (!el || !bar) return;
+    el.textContent = `${Math.round(val)}°`;
+    const pct = Math.min(100, Math.max(0, (val - min) / (max - min) * 100));
+    bar.style.width = pct + '%';
+  });
+}
+
+function updateStatus(text) {
+  document.getElementById('statusText').textContent = text;
+  document.getElementById('dockStatus').textContent = text;
+}
+
+/* ============================================================
+   EXERCISE: SQUAT
+   ============================================================ */
+function processSquat(lms, angles, issues) {
+  const avgKnee = (angles.kneeL + angles.kneeR) / 2;
+
+  // Rep state machine: neutral → down (knee < 115°) → up (knee > 160°)
+  if (avgKnee < 115 && state.repState !== 'down') {
+    state.repState = 'down';
+  } else if (avgKnee > 160 && state.repState === 'down') {
+    const now = Date.now();
+    if (now - state.lastRepTime > 900) {
+      state.lastRepTime = now;
+      state.repState = 'neutral';
+      countRep(state.formGood);
+    }
+  }
+
+  // Form checks
+  if (avgKnee < 55) {
+    issues.push('Too deep — ease up');
+    audioCorrection('squat_deep', 'Watch your depth — you\'re going too deep. Aim for parallel.');
+  }
+  if (angles.hipL < 85 && avgKnee < 130) {
+    issues.push('Lean forward — chest up');
+    audioCorrection('squat_chest', 'Keep your chest up and your back straight as you squat down.');
+  }
+
+  // Knee cave detection
+  const lKneeX = lms[LM.LEFT_KNEE].x, lAnkleX = lms[LM.LEFT_ANKLE].x;
+  const rKneeX = lms[LM.RIGHT_KNEE].x, rAnkleX = lms[LM.RIGHT_ANKLE].x;
+  if (Math.abs(lKneeX - lAnkleX) > 0.09 || Math.abs(rKneeX - rAnkleX) > 0.09) {
+    issues.push('Knees caving in');
+    audioCorrection('squat_knees', 'Push your knees outward — they should track over your toes.');
+  }
+
+  // Depth encouragement
+  if (state.repState === 'down' && canSpeak('squat_depth_good', 5000)) {
+    if (avgKnee >= 88 && avgKnee <= 115 && issues.length === 0) {
+      speak(randomChoice(['Good depth — hold and drive.', 'Nice depth! Now explode up.', 'Perfect parallel — push through your heels.']));
+    }
+  }
+}
+
+/* ============================================================
+   EXERCISE: PUSH-UP
+   ============================================================ */
+function processPushup(lms, angles, issues) {
+  const avgElbow = (angles.elbowL + angles.elbowR) / 2;
+  const hip = lms[LM.LEFT_HIP];
+  const shoulder = lms[LM.LEFT_SHOULDER];
+  const ankle = lms[LM.LEFT_ANKLE];
+
+  // Rep detection: down (elbow < 90°) → up (elbow > 155°)
+  if (avgElbow < 90 && state.repState !== 'down') {
+    state.repState = 'down';
+  } else if (avgElbow > 155 && state.repState === 'down') {
+    const now = Date.now();
+    if (now - state.lastRepTime > 700) {
+      state.lastRepTime = now;
+      state.repState = 'neutral';
+      countRep(state.formGood);
+    }
+  }
+
+  // Hip sag detection
+  const bodyLineDiff = hip.y - (shoulder.y + (ankle.y - shoulder.y) * 0.5);
+  if (bodyLineDiff > 0.1) {
+    issues.push('Hips sagging — core tight');
+    audioCorrection('pushup_hips', 'Hips are sagging — engage your core and keep a straight body line.');
+  }
+
+  // Hip pike
+  if (bodyLineDiff < -0.12) {
+    issues.push('Hips too high — lower them');
+    audioCorrection('pushup_pike', 'Your hips are too high. Lower them to form a straight line.');
+  }
+
+  // Elbow flare
+  if (angles.elbowL < 90 && angles.elbowL > 30) {
+    const lShoulderX = lms[LM.LEFT_SHOULDER].x, lElbowX = lms[LM.LEFT_ELBOW].x;
+    if (Math.abs(lShoulderX - lElbowX) > 0.1) {
+      issues.push('Elbows flaring — tuck them');
+      audioCorrection('pushup_flare', 'Tuck your elbows closer to your torso — about 45 degrees from your body.');
+    }
+  }
+
+  // Full extension reminder
+  if (state.repState === 'down' && avgElbow > 155 && canSpeak('pushup_lockout', 5000)) {
+    speak(randomChoice(['Good rep! Keep that body rigid.', 'Strong push — stay rigid!', 'Great form — chest to floor next.']));
+  }
+}
+
+/* ============================================================
+   EXERCISE: SHOULDER PRESS
+   ============================================================ */
+function processPress(lms, angles, issues) {
+  const wristL = lms[LM.LEFT_WRIST], shoulderL = lms[LM.LEFT_SHOULDER];
+  const wristR = lms[LM.RIGHT_WRIST], shoulderR = lms[LM.RIGHT_SHOULDER];
+  const avgElbow = (angles.elbowL + angles.elbowR) / 2;
+
+  // Rep: wrists above head (y < shoulder y - 0.2) = up; wrists at shoulder = down
+  if (wristL.y < shoulderL.y - 0.18 && state.repState !== 'up') {
+    state.repState = 'up';
+  } else if (wristL.y > shoulderL.y - 0.02 && state.repState === 'up') {
+    const now = Date.now();
+    if (now - state.lastRepTime > 800) {
+      state.lastRepTime = now;
+      state.repState = 'neutral';
+      countRep(state.formGood);
+    }
+  }
+
+  // Control check
+  if (avgElbow < 60 && state.repState !== 'up') {
+    issues.push('Control the descent');
+    audioCorrection('press_descent', 'Slow down on the way down — control every centimeter.');
+  }
+
+  // Uneven press
+  const wristDiff = Math.abs(wristL.y - wristR.y);
+  if (wristDiff > 0.06) {
+    issues.push('Uneven press — balance it');
+    audioCorrection('press_uneven', 'Keep both wrists at the same height — press evenly on both sides.');
+  }
+
+  // Full lockout
+  if (state.repState === 'up' && avgElbow > 160 && canSpeak('press_lockout', 5000)) {
+    speak(randomChoice(['Lock it out! Great rep.', 'Full extension — solid!', 'Nice press — full lockout achieved.']));
+  }
+}
+
+/* ============================================================
+   EXERCISE: BICEP CURL (NEW)
+   ============================================================ */
+function processCurl(lms, angles, issues) {
+  const avgElbow = (angles.elbowL + angles.elbowR) / 2;
+  const shoulderL = lms[LM.LEFT_SHOULDER], elbowL = lms[LM.LEFT_ELBOW];
+  const shoulderR = lms[LM.RIGHT_SHOULDER], elbowR = lms[LM.RIGHT_ELBOW];
+  const hipL = lms[LM.LEFT_HIP], hipR = lms[LM.RIGHT_HIP];
+
+  // Rep state machine: neutral → up (elbow < 55° = contracted) → down (elbow > 155° = extended)
+  if (avgElbow < 55 && state.repState !== 'up') {
+    state.repState = 'up';
+  } else if (avgElbow > 155 && state.repState === 'up') {
+    const now = Date.now();
+    if (now - state.lastRepTime > 700) {
+      state.lastRepTime = now;
+      state.repState = 'neutral';
+      countRep(state.formGood);
+    }
+  }
+
+  // CORRECTION 1: Elbows drifting forward (shoulder-elbow X drift)
+  const lElbowForward = elbowL.x - shoulderL.x;
+  const rElbowForward = elbowR.x - shoulderR.x;
+  if ((Math.abs(lElbowForward) > 0.08 || Math.abs(rElbowForward) > 0.08) && avgElbow < 120) {
+    issues.push('Keep elbows tucked in');
+    audioCorrection('curl_elbow_fwd', 'Keep your elbows pinned to your sides — don\'t let them swing forward.');
+  }
+
+  // CORRECTION 2: Swinging momentum (hip movement during curl)
+  const hipMidX = (hipL.x + hipR.x) / 2;
+  const hipMidY = (hipL.y + hipR.y) / 2;
+  if (state.lastHipY !== undefined) {
+    const hipYDelta = Math.abs(hipMidY - state.lastHipY);
+    if (hipYDelta > 0.02 && avgElbow < 100) {
+      issues.push('Avoid swinging — use arms only');
+      audioCorrection('curl_swing', 'You\'re swinging your body. Keep your hips still and let your biceps do the work.');
+    }
+  }
+  state.lastHipY = hipMidY;
+
+  // CORRECTION 3: Incomplete extension (rep counted but elbow not extended enough)
+  if (state.repState === 'up' && avgElbow > 100 && avgElbow < 145) {
+    issues.push('Fully extend your arms');
+    audioCorrection('curl_extend', 'Fully extend your arms on the way down to get the full range of motion.');
+  }
+
+  // CORRECTION 4: Partial contraction at top
+  if (state.repState === 'up' && avgElbow > 65 && avgElbow < 100) {
+    issues.push('Curl higher — full contraction');
+    audioCorrection('curl_top', 'Curl all the way up — squeeze your biceps at the top of the movement.');
+  }
+
+  // CORRECTION 5: Wrist alignment (wrist should stay neutral — approximate via elbow–wrist line)
+  // If wrist is significantly below elbow midpoint during contraction phase, flag it
+  const wristL = lms[LM.LEFT_WRIST];
+  if (avgElbow < 90 && wristL.y > elbowL.y + 0.06) {
+    issues.push('Neutral wrist position');
+    audioCorrection('curl_wrist', 'Keep your wrists straight and neutral — don\'t let them drop.');
+  }
+
+  // Positive reinforcement at peak
+  if (state.repState === 'up' && avgElbow < 50 && canSpeak('curl_peak', 4000) && issues.length === 0) {
+    speak(randomChoice(['Squeeze at the top!', 'Full contraction — hold it!', 'Beautiful curl! Squeeze and lower slowly.']));
+  }
+}
+
+/* ============================================================
+   REP COUNTING & CELEBRATION
+   ============================================================ */
+function countRep(goodForm) {
+  state.reps++;
+  const calPerRep = CAL_PER_REP[state.exercise] || 0.25;
+  state.calories += calPerRep;
+
+  if (goodForm) {
+    state.goodReps++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+  } else {
+    state.streak = 0;
+  }
+
+  // DOM updates (batch for performance)
+  requestAnimationFrame(() => {
+    document.getElementById('repCount').textContent = state.reps;
+    document.getElementById('goodReps').textContent = state.goodReps;
+    document.getElementById('dockRep').textContent = state.reps;
+    document.getElementById('statTotal').textContent = state.reps;
+    document.getElementById('statGood').textContent = state.goodReps;
+    document.getElementById('statCalories').textContent = Math.round(state.calories);
+    document.getElementById('streakVal').textContent = state.bestStreak;
+    document.getElementById('calorieHeader').textContent = `${Math.round(state.calories)} kcal`;
+
+    const progress = Math.min((state.reps / state.targetReps) * 100, 100);
+    document.getElementById('repProgress').style.width = progress + '%';
+
+    const acc = state.reps > 0 ? Math.round((state.goodReps / state.reps) * 100) : 0;
+    document.getElementById('accuracyText').textContent = acc + '%';
+    document.getElementById('accuracyPct').textContent = acc + '%';
+    document.getElementById('accuracyHeader').textContent = acc + '%';
+
+    // Ring fill (circumference ~157.08)
+    const offset = 157.08 - (acc / 100) * 157.08;
+    document.getElementById('ringFill').style.strokeDashoffset = offset;
+
+    // Ring color by accuracy
+    const ringColor = acc >= 90 ? 'var(--purple)' : acc >= 75 ? 'var(--accent)' : acc >= 55 ? 'var(--accent2)' : 'var(--warn)';
+    document.getElementById('ringFill').style.stroke = ringColor;
+
+    // Grade
+    updateGradeDisplay(acc);
+  });
+
+  // Rep flash animation
+  const flash = document.getElementById('repFlash');
+  document.getElementById('repFlashNum').textContent = state.reps;
+  flash.style.opacity = '1';
+  gsap.fromTo(flash, { scale:0.8, opacity:0 }, { scale:1, opacity:1, duration:0.2, onComplete: () => {
+    gsap.to(flash, { opacity:0, duration:0.4, delay:0.4 });
+  }});
+
+  // Rep audio feedback
+  const milestone = state.reps % 10 === 0 && state.reps > 0;
+  const halfway = state.reps === Math.floor(state.targetReps / 2);
+
+  if (milestone) {
+    speak(`${state.reps} reps! Outstanding — you're on fire! Keep this momentum!`, true);
+    showGoodFlash(`🔥 ${state.reps} REPS!`);
+  } else if (halfway) {
+    speak(`Halfway to your target — ${state.reps} reps done. Keep pushing!`);
+  } else if (goodForm && canSpeak('rep_fb', 1800)) {
+    speak(randomChoice([
+      `Rep ${state.reps} — great form!`,
+      `${state.reps}. Looking good!`,
+      `Nice rep ${state.reps}. Keep it up.`,
+      `Solid ${state.reps}. You've got this.`,
+      `Rep ${state.reps}. Stay strong!`
+    ]));
+    if (state.streak >= 5 && state.streak % 5 === 0) {
+      speak(`${state.streak} reps in a row with perfect form. Incredible!`);
+    }
+  } else if (!goodForm && canSpeak('bad_rep', 2500)) {
+    speak(randomChoice([
+      `Rep ${state.reps} counted — watch your form.`,
+      `Keep the form tight on the next one.`,
+      `Almost — focus on your technique.`
+    ]));
+  }
+
+  // Add feedback item
+  addFeedback(goodForm ? 'good' : 'warn',
+    goodForm ? `Rep ${state.reps} — perfect form ✓` : `Rep ${state.reps} — form needs work`);
+
+  // Check target completion
+  if (state.reps === state.targetReps) {
+    setTimeout(() => speak(`${state.targetReps} reps complete! Excellent workout. Take a breath — you've earned it.`, true), 500);
+  }
+}
+
+/* ============================================================
+   AUDIO CORRECTION HELPER
+   ============================================================ */
+function audioCorrection(key, text) {
+  if (!canSpeak(key, 5000)) return;
+  state.corrections++;
+  document.getElementById('statCorrections').textContent = state.corrections;
+  speak(text);
+  showCorrectionFlash(text);
+  addFeedback('warn', text);
+}
+
+function showCorrectionFlash(text) {
+  const el = document.getElementById('correctionFlash');
+  el.textContent = '⚠ ' + text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+function showGoodFlash(text) {
+  const el = document.getElementById('goodFlash');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function addFeedback(type, text) {
+  const list = document.getElementById('feedbackList');
+  const icons = { good:'✅', warn:'⚠️', info:'ℹ️' };
+  const item = document.createElement('div');
+  item.className = `feedback-item type-${type}`;
+  item.innerHTML = `<span class="fi-icon">${icons[type]||'ℹ️'}</span><span>${text}</span>`;
+  list.insertBefore(item, list.firstChild);
+  while (list.children.length > 6) list.removeChild(list.lastChild);
+}
+
+/* ============================================================
+   GRADE DISPLAY
+   ============================================================ */
+function getGrade(acc) {
+  if (acc >= 90) return { label:'ELITE', cls:'elite', color:'var(--purple)' };
+  if (acc >= 75) return { label:'ADVANCED', cls:'advanced', color:'var(--accent)' };
+  if (acc >= 55) return { label:'INTERMEDIATE', cls:'intermediate', color:'var(--accent2)' };
+  return { label:'BEGINNER', cls:'beginner', color:'var(--warn)' };
+}
+
+function updateGradeDisplay(acc) {
+  if (state.reps < 3) return;
+  const g = getGrade(acc);
+  const badge = document.getElementById('gradeBadge');
+  badge.textContent = g.label;
+  badge.className = `grade-badge ${g.cls}`;
+  const gradeText = document.getElementById('gradeText');
+  gradeText.textContent = g.label;
+  gradeText.style.color = g.color;
+}
+
+/* ============================================================
+   EXERCISE SELECTION
+   ============================================================ */
+function setExercise(name, btn, source) {
+  state.exercise = name;
+  state.reps = 0;
+  state.goodReps = 0;
+  state.repState = 'neutral';
+  state.lastRepTime = 0;
+  state.angleBuffers = { a:[], b:[], c:[], d:[] };
+  state.lastHipY = undefined;
+
+  // Update desk buttons
+  document.querySelectorAll('.exercise-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('ex-' + name)?.classList.add('selected');
+
+  // Update mobile buttons
+  document.querySelectorAll('.mob-ex-btn').forEach(b => b.classList.remove('selected'));
+  const mobBtns = document.querySelectorAll('.mob-ex-btn');
+  const exOrder = ['squat','pushup','press','curl'];
+  mobBtns[exOrder.indexOf(name)]?.classList.add('selected');
+
+  const meta = EXERCISE_META[name];
+  document.getElementById('exerciseLabel').textContent = meta.label;
+  document.getElementById('dockEx').textContent = meta.label;
+  document.getElementById('repCount').textContent = '0';
+  document.getElementById('goodReps').textContent = '0';
+  document.getElementById('dockRep').textContent = '0';
+  document.getElementById('statTotal').textContent = '0';
+  document.getElementById('statGood').textContent = '0';
+  document.getElementById('repProgress').style.width = '0%';
+  document.getElementById('accuracyText').textContent = '–%';
+  document.getElementById('accuracyPct').textContent = '–%';
+  document.getElementById('accuracyHeader').textContent = '–%';
+  document.getElementById('ringFill').style.strokeDashoffset = '157.08';
+  document.getElementById('gradeText').textContent = '–';
+  document.getElementById('gradeBadge').className = 'grade-badge';
+  document.getElementById('feedbackList').innerHTML = `<div class="feedback-item type-info"><span class="fi-icon">ℹ️</span><span>Switched to ${meta.label}. Adjusting to new position.</span></div>`;
+
+  // Update angle labels
+  document.getElementById('label-angA').textContent = meta.angA;
+  document.getElementById('label-angB').textContent = meta.angB;
+  document.getElementById('label-angC').textContent = meta.angC;
+  document.getElementById('label-angD').textContent = meta.angD;
+
+  const prompts = {
+    squat:  'Squat mode. Stand facing the camera, feet shoulder-width apart.',
+    pushup: 'Push-up mode. Get into plank position. Make sure your full body is visible.',
+    press:  'Shoulder press. Hold your weights at shoulder height and face the camera.',
+    curl:   'Bicep curl mode. Stand upright, arms at your sides. Keep those elbows pinned!'
+  };
+  speak(prompts[name], true);
+}
+
+/* ============================================================
+   SKELETON DRAWING
+   ============================================================ */
+const CONNECTIONS = [
+  [LM.LEFT_SHOULDER,  LM.RIGHT_SHOULDER],
+  [LM.LEFT_SHOULDER,  LM.LEFT_ELBOW],
+  [LM.LEFT_ELBOW,     LM.LEFT_WRIST],
+  [LM.RIGHT_SHOULDER, LM.RIGHT_ELBOW],
+  [LM.RIGHT_ELBOW,    LM.RIGHT_WRIST],
+  [LM.LEFT_SHOULDER,  LM.LEFT_HIP],
+  [LM.RIGHT_SHOULDER, LM.RIGHT_HIP],
+  [LM.LEFT_HIP,       LM.RIGHT_HIP],
+  [LM.LEFT_HIP,       LM.LEFT_KNEE],
+  [LM.RIGHT_HIP,      LM.RIGHT_KNEE],
+  [LM.LEFT_KNEE,      LM.LEFT_ANKLE],
+  [LM.RIGHT_KNEE,     LM.RIGHT_ANKLE],
+  [LM.NOSE,           LM.LEFT_SHOULDER],
+  [LM.NOSE,           LM.RIGHT_SHOULDER],
+];
+
+const KEY_JOINTS = new Set([11,12,13,14,15,16,23,24,25,26,27,28]);
+
+function drawSkeleton(ctx, landmarks, w, h, goodForm) {
+  const baseColor = goodForm ? '#00d4aa' : '#ff4f6b';
+  const glowColor = goodForm ? 'rgba(0,212,170,0.55)' : 'rgba(255,79,107,0.55)';
+
+  ctx.save();
+
+  // Connections
+  ctx.lineWidth = 2.8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = glowColor;
+  ctx.shadowBlur = 10;
+
+  CONNECTIONS.forEach(([a, b]) => {
+    const lmA = landmarks[a], lmB = landmarks[b];
+    if (!lmA || !lmB) return;
+    if ((lmA.visibility || 0) < 0.35 || (lmB.visibility || 0) < 0.35) return;
+
+    ctx.strokeStyle = baseColor;
+    ctx.globalAlpha = Math.min(lmA.visibility, lmB.visibility);
+    ctx.beginPath();
+    ctx.moveTo(lmA.x * w, lmA.y * h);
+    ctx.lineTo(lmB.x * w, lmB.y * h);
+    ctx.stroke();
+  });
+
+  ctx.globalAlpha = 1;
+
+  // Joints
+  landmarks.forEach((lm, i) => {
+    if ((lm.visibility || 0) < 0.35) return;
+    const isKey = KEY_JOINTS.has(i);
+    const r = isKey ? 5 : 3;
+    ctx.beginPath();
+    ctx.arc(lm.x * w, lm.y * h, r, 0, Math.PI * 2);
+    ctx.fillStyle = isKey ? baseColor : 'rgba(255,255,255,0.5)';
+    ctx.globalAlpha = lm.visibility || 1;
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+function drawAngleOverlay(ctx, landmarks, w, h, angles) {
+  ctx.save();
+  ctx.font = `600 11px ${getComputedStyle(document.body).getPropertyValue('--font-mono') || 'monospace'}`;
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.shadowColor = 'rgba(0,0,0,0.8)';
+  ctx.shadowBlur = 4;
+
+  const pts = [
+    { lm: LM.LEFT_KNEE,  val: angles.kneeL,  ox: -36, oy: -10 },
+    { lm: LM.RIGHT_KNEE, val: angles.kneeR,  ox:  8,  oy: -10 },
+  ];
+
+  if (state.exercise === 'pushup' || state.exercise === 'press' || state.exercise === 'curl') {
+    pts.length = 0;
+    pts.push({ lm: LM.LEFT_ELBOW,  val: angles.elbowL, ox: -40, oy: -8 });
+    pts.push({ lm: LM.RIGHT_ELBOW, val: angles.elbowR, ox:  8,  oy: -8 });
+  }
+
+  pts.forEach(({ lm: lmIdx, val, ox, oy }) => {
+    if (!landmarks[lmIdx]) return;
+    const lmPt = landmarks[lmIdx];
+    if ((lmPt.visibility || 0) < 0.4) return;
+    ctx.fillText(`${Math.round(val)}°`, lmPt.x * w + ox, lmPt.y * h + oy);
+  });
+
+  ctx.restore();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+function startTimer() {
+  state.sessionStart = Date.now();
+  clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+  if (!state.sessionStart) return;
+  const elapsed = Math.floor((Date.now() - state.sessionStart) / 1000);
+  const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const s = String(elapsed % 60).padStart(2, '0');
+  const t = `${m}:${s}`;
+  document.getElementById('sessionTimer').textContent = t;
+  document.getElementById('sessionTimerHeader').textContent = t;
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+function resetSession() {
+  state.reps = 0;
+  state.goodReps = 0;
+  state.corrections = 0;
+  state.repState = 'neutral';
+  state.lastRepTime = 0;
+  state.calories = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.sessionStart = Date.now();
+  state.angleBuffers = { a:[], b:[], c:[], d:[] };
+  state.lastHipY = undefined;
+
+  ['repCount','goodReps','dockRep','statTotal','statGood','statCorrections'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '0';
+  });
+  document.getElementById('statCalories').textContent = '0';
+  document.getElementById('calorieHeader').textContent = '0 kcal';
+  document.getElementById('streakVal').textContent = '0';
+  document.getElementById('repProgress').style.width = '0%';
+  document.getElementById('ringFill').style.strokeDashoffset = '157.08';
+  document.getElementById('accuracyPct').textContent = '–%';
+  document.getElementById('accuracyText').textContent = '–%';
+  document.getElementById('accuracyHeader').textContent = '–%';
+  document.getElementById('gradeText').textContent = '–';
+  document.getElementById('gradeBadge').className = 'grade-badge';
+  document.getElementById('feedbackList').innerHTML = '<div class="feedback-item type-info"><span class="fi-icon">ℹ️</span><span>Session reset. Ready when you are!</span></div>';
+
+  speak('Session reset. Ready when you are!', true);
+}
+
+/* ============================================================
+   SESSION SUMMARY
+   ============================================================ */
+function endSession() {
+  const acc = state.reps > 0 ? Math.round((state.goodReps / state.reps) * 100) : 0;
+  const elapsed = state.sessionStart ? Math.floor((Date.now() - state.sessionStart) / 1000) : 0;
+  const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+  const s = String(elapsed % 60).padStart(2,'0');
+  const grade = getGrade(acc);
+
+  document.getElementById('sumReps').textContent = state.reps;
+  document.getElementById('sumGood').textContent = state.goodReps;
+  document.getElementById('sumTime').textContent = `${m}:${s}`;
+  document.getElementById('sumCal').textContent = Math.round(state.calories);
+  document.getElementById('sumAccuracy').textContent = acc + '%';
+  document.getElementById('modalBadge').textContent = grade.label;
+  document.getElementById('modalBadge').className = `modal-badge ${grade.cls}`;
+  document.getElementById('modalTitle') && (document.getElementById('modalTitle').textContent = 'Workout Complete!');
+  document.getElementById('modalSubtitle').textContent = `${EXERCISE_META[state.exercise].label} · ${state.reps} reps · ${grade.label}`;
+
+  const modal = document.getElementById('summaryModal');
+  modal.classList.add('show');
+
+  // Animate accuracy bar after modal opens
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.getElementById('sumAccFill').style.width = acc + '%';
+    }, 200);
+  });
+
+  if (state.reps > 0) {
+    speak(`Great workout! ${state.reps} reps with ${acc} percent accuracy. You earned the ${grade.label} grade. Well done!`, true);
+  }
+}
+
+function closeSummary() {
+  document.getElementById('summaryModal').classList.remove('show');
+}
+
+function resetAndClose() {
+  closeSummary();
+  resetSession();
+}
+
+/* ============================================================
+   SIMULATION MODE (fallback / demo)
+   ============================================================ */
+function runSimulation() {
+  const canvas = document.getElementById('poseCanvas');
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+  state.simMode = true;
+
+  addFeedback('info', 'Demo/simulation mode active. Enable camera for real tracking.');
+  speak('Simulation mode. I\'m demonstrating perfect squat form. You can still switch exercises.');
+
+  function simFrame() {
+    if (!state.poseActive) return;
+    t++;
+    trackFPS();
+
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Simulate smooth squat cycle
+    const phase = t * 0.028;
+    const squat = (Math.sin(phase) * 0.5 + 0.5); // 0..1
+    const cx = 0.5, cy = 0.30;
+
+    // Simulated joint positions
+    const lms = buildSimLandmarks(cx, cy, squat, state.exercise);
+
+    // Calculate angles from sim
+    const kneeL  = calcAngle(lms[LM.LEFT_HIP], lms[LM.LEFT_KNEE], lms[LM.LEFT_ANKLE]);
+    const kneeR  = calcAngle(lms[LM.RIGHT_HIP], lms[LM.RIGHT_KNEE], lms[LM.RIGHT_ANKLE]);
+    const hipL   = calcAngle(lms[LM.LEFT_SHOULDER], lms[LM.LEFT_HIP], lms[LM.LEFT_KNEE]);
+    const elbowL = calcAngle(lms[LM.LEFT_SHOULDER], lms[LM.LEFT_ELBOW], lms[LM.LEFT_WRIST]);
+    const elbowR = calcAngle(lms[LM.RIGHT_SHOULDER], lms[LM.RIGHT_ELBOW], lms[LM.RIGHT_WRIST]);
+
+    const angles = { kneeL, kneeR, hipL, hipR:hipL, elbowL, elbowR };
+    state.lastAngles = angles;
+    state.confidence = 90 + Math.round(Math.sin(t * 0.05) * 6);
+
+    document.getElementById('confPill').textContent = `${state.confidence}% sim`;
+
+    // Exercise logic
+    const issues = [];
+    if (state.exercise === 'squat')       processSquat(lms, angles, issues);
+    else if (state.exercise === 'pushup') processPushup(lms, angles, issues);
+    else if (state.exercise === 'press')  processPress(lms, angles, issues);
+    else if (state.exercise === 'curl')   processCurl(lms, angles, issues);
+
+    updateAnglesDisplay(angles);
+    state.formGood = issues.length === 0;
+    const dot = document.getElementById('statusDot');
+    dot.className = issues.length > 0 ? 'status-dot bad' : 'status-dot';
+    updateStatus(issues.length > 0 ? issues[0] : 'Good form — keep it up!');
+
+    drawSkeleton(ctx, lms, w, h, state.formGood);
+    drawAngleOverlay(ctx, lms, w, h, angles);
+
+    requestAnimationFrame(simFrame);
+  }
+  simFrame();
+}
+
+function buildSimLandmarks(cx, cy, squat, exercise) {
+  const s = squat;
+  // Base array with all 33 landmarks
+  const lms = Array.from({length:33}, () => ({ x:0.5, y:0.5, z:0, visibility:0.9 }));
+
+  if (exercise === 'squat') {
+    // Squat: knees bend, hips drop
+    lms[0]  = { x:cx, y:cy-0.11, visibility:0.99 };
+    lms[11] = { x:cx-0.11, y:cy, visibility:0.99 };
+    lms[12] = { x:cx+0.11, y:cy, visibility:0.99 };
+    lms[13] = { x:cx-0.15, y:cy+0.10, visibility:0.9 };
+    lms[14] = { x:cx+0.15, y:cy+0.10, visibility:0.9 };
+    lms[15] = { x:cx-0.17, y:cy+0.22, visibility:0.85 };
+    lms[16] = { x:cx+0.17, y:cy+0.22, visibility:0.85 };
+    lms[23] = { x:cx-0.08, y:cy+0.22+s*0.09, visibility:0.99 };
+    lms[24] = { x:cx+0.08, y:cy+0.22+s*0.09, visibility:0.99 };
+    lms[25] = { x:cx-0.10, y:cy+0.40+s*0.05, visibility:0.95 };
+    lms[26] = { x:cx+0.10, y:cy+0.40+s*0.05, visibility:0.95 };
+    lms[27] = { x:cx-0.09, y:cy+0.56, visibility:0.9 };
+    lms[28] = { x:cx+0.09, y:cy+0.56, visibility:0.9 };
+  } else if (exercise === 'pushup') {
+    // Pushup: angled, elbow bends
+    const ph = 0.10 + s * 0.12;
+    lms[0]  = { x:cx, y:cy+ph-0.08, visibility:0.95 };
+    lms[11] = { x:cx-0.12, y:cy+ph, visibility:0.99 };
+    lms[12] = { x:cx+0.12, y:cy+ph, visibility:0.99 };
+    lms[13] = { x:cx-0.18, y:cy+ph+0.06+s*0.08, visibility:0.9 };
+    lms[14] = { x:cx+0.18, y:cy+ph+0.06+s*0.08, visibility:0.9 };
+    lms[15] = { x:cx-0.20, y:cy+ph+0.18, visibility:0.85 };
+    lms[16] = { x:cx+0.20, y:cy+ph+0.18, visibility:0.85 };
+    lms[23] = { x:cx-0.08, y:cy+ph+0.18, visibility:0.99 };
+    lms[24] = { x:cx+0.08, y:cy+ph+0.18, visibility:0.99 };
+    lms[25] = { x:cx-0.10, y:cy+ph+0.35, visibility:0.9 };
+    lms[26] = { x:cx+0.10, y:cy+ph+0.35, visibility:0.9 };
+    lms[27] = { x:cx-0.10, y:cy+ph+0.50, visibility:0.88 };
+    lms[28] = { x:cx+0.10, y:cy+ph+0.50, visibility:0.88 };
+  } else if (exercise === 'press') {
+    // Press: arms go up overhead
+    const armY = cy - s * 0.25;
+    lms[0]  = { x:cx, y:cy-0.11, visibility:0.99 };
+    lms[11] = { x:cx-0.11, y:cy, visibility:0.99 };
+    lms[12] = { x:cx+0.11, y:cy, visibility:0.99 };
+    lms[13] = { x:cx-0.15, y:cy-0.05+s*0.02, visibility:0.9 };
+    lms[14] = { x:cx+0.15, y:cy-0.05+s*0.02, visibility:0.9 };
+    lms[15] = { x:cx-0.15, y:armY, visibility:0.88 };
+    lms[16] = { x:cx+0.15, y:armY, visibility:0.88 };
+    lms[23] = { x:cx-0.08, y:cy+0.22, visibility:0.99 };
+    lms[24] = { x:cx+0.08, y:cy+0.22, visibility:0.99 };
+    lms[25] = { x:cx-0.09, y:cy+0.40, visibility:0.95 };
+    lms[26] = { x:cx+0.09, y:cy+0.40, visibility:0.95 };
+    lms[27] = { x:cx-0.09, y:cy+0.56, visibility:0.9 };
+    lms[28] = { x:cx+0.09, y:cy+0.56, visibility:0.9 };
+  } else { // curl
+    // Curl: elbow bends, forearm lifts
+    const curlY = cy + 0.10 - s * 0.18;
+    lms[0]  = { x:cx, y:cy-0.11, visibility:0.99 };
+    lms[11] = { x:cx-0.11, y:cy, visibility:0.99 };
+    lms[12] = { x:cx+0.11, y:cy, visibility:0.99 };
+    lms[13] = { x:cx-0.13, y:cy+0.14, visibility:0.9 };
+    lms[14] = { x:cx+0.13, y:cy+0.14, visibility:0.9 };
+    lms[15] = { x:cx-0.14, y:curlY, visibility:0.88 };
+    lms[16] = { x:cx+0.14, y:curlY, visibility:0.88 };
+    lms[23] = { x:cx-0.08, y:cy+0.22, visibility:0.99 };
+    lms[24] = { x:cx+0.08, y:cy+0.22, visibility:0.99 };
+    lms[25] = { x:cx-0.09, y:cy+0.40, visibility:0.95 };
+    lms[26] = { x:cx+0.09, y:cy+0.40, visibility:0.95 };
+    lms[27] = { x:cx-0.09, y:cy+0.56, visibility:0.9 };
+    lms[28] = { x:cx+0.09, y:cy+0.56, visibility:0.9 };
+  }
+  return lms;
+}
+
+/* ============================================================
+   RANDOM CHOICE HELPER
+   ============================================================ */
+function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener('load', () => {
+  // Pre-warm voice synthesis
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+  }
+  // Animate landing on load
+  gsap.from('.logo-badge', { y:-15, opacity:0, duration:0.5 });
+  gsap.from('.hero h1', { y:25, opacity:0, duration:0.6, delay:0.1 });
+  gsap.from('.hero-sub', { y:20, opacity:0, duration:0.6, delay:0.2 });
+  gsap.from('.hero-btns', { y:15, opacity:0, duration:0.5, delay:0.3 });
+  gsap.from('.body-preview', { scale:0.8, opacity:0, duration:0.6, delay:0.15 });
+  gsap.from('.feat-card', { y:20, opacity:0, duration:0.5, delay:0.4, stagger:0.08 });
+});
+
+// Pause speech when tab is hidden
+document.addEventListener('visibilitychange', () => {
+  if (!('speechSynthesis' in window)) return;
+  if (document.hidden) {
+    speechSynthesis.pause();
+  } else {
+    speechSynthesis.resume();
+    // If stuck, reset
+    if (speechActive) {
+      setTimeout(() => { speechActive = false; drainQueue(); }, 500);
+    }
+  }
+});
+
+// Handle stuck speech on Chrome (Chrome pauses after 15s)
+setInterval(() => {
+  if (speechActive && speechSynthesis.speaking) {
+    speechSynthesis.resume();
+  }
+  if (speechActive && !speechSynthesis.speaking && !speechSynthesis.pending) {
+    speechActive = false;
+    drainQueue();
+  }
+}, 3000);
+</script>
+</body>
+</html>
